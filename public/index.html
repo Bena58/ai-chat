@@ -9,6 +9,10 @@
 <body>
   <div id="app">
     <h1>AI Chat</h1>
+    <div id="model-selector">
+      <label for="model-select">Model:</label>
+      <select id="model-select"></select>
+    </div>
     <div id="chat-box"></div>
     <div id="input-area">
       <input type="text" id="user-input" placeholder="Type a message..." />
@@ -20,6 +24,26 @@
     const chatBox = document.getElementById("chat-box");
     const input = document.getElementById("user-input");
     const sendBtn = document.getElementById("send-btn");
+    const modelSelect = document.getElementById("model-select");
+
+    // Load available models from backend
+    async function loadModels() {
+      try {
+        const res = await fetch("/api/models");
+        const { models } = await res.json();
+        modelSelect.innerHTML = "";
+        models.forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = `${m.id} (${m.provider})`;
+          modelSelect.appendChild(opt);
+        });
+      } catch {
+        const opt = document.createElement("option");
+        opt.textContent = "Failed to load models";
+        modelSelect.appendChild(opt);
+      }
+    }
 
     function addMessage(role, text) {
       const div = document.createElement("div");
@@ -41,7 +65,7 @@
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify({ message, model: modelSelect.value }),
         });
 
         const data = await res.json();
@@ -63,6 +87,8 @@
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") sendMessage();
     });
+
+    loadModels();
   </script>
 </body>
 </html>
